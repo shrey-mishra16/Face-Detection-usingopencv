@@ -18,24 +18,27 @@ import os
 def dist(x1,x2): # Function For Euclidian Distance
 	return np.sqrt(np.sum((x1-x2)**2))
 
-def knn(X,Y,query_x,k=5):
-    m = X.shape[0]
-    
-    d_list = []
-    
-    for i in range(m):
-        
-        d = dist(X[i],query_x)
-        d_list.append((d,Y[i]))
-        
-    d_list = sorted(d_list,reverse=False)
-    d_list = np.array(d_list[:k])
-    d_list = d_list[:,1]
-    freq = np.unique(d_list,return_counts=True) 
-    idx = np.argmax(freq[1])
-    pred = freq[0][idx]
-    
-    return int(pred)
+def knn(train,query_x,k=5):
+    dist = []
+
+    for i in range (train.shape[0]):
+    	#Get The Vector And Label
+    	ix=train[i,:-1]
+    	iy=train[i,-1]
+    	#Compute Distance From test Point
+    	d=dist(test,ix)
+    	dist.append([d,iy])
+    #Sort Based On Distance And Get Top k
+    dk=sorted(dist,key=lambda x:x[0])[:k]
+    #Retrieve Only Te Labels
+    labels = np.array(dk)[:,-1]
+
+    #Get Frequencies Of Each Label
+    op=np.unique(labels,return_counts=True)
+
+    #Find max Frequency And Corresponding Labels
+    index = np.argmax(op[1])
+    return op[1][index]	
 
 
 # Init Camera
@@ -52,8 +55,8 @@ face_data = []
 
 label=[]
 
-class_id = 0
-names = {}
+class_id = 0#Labels For the Given File
+names = {}#Mappintg btw id-file
 
 #Data Preparation
 
@@ -61,7 +64,7 @@ for fx in os.listdir(dataset_path): # For Giving Path
 	if fx.endswith('.npy'):
 
 		data_item = np.load(dataset_path+fx)
-		face_data.append(data)
+		face_data.append(data_item)
 
 		#Create Labels For Class
 
@@ -70,15 +73,23 @@ for fx in os.listdir(dataset_path): # For Giving Path
 		labels.append(target)
 
 face_dataset = np.concatenate(face_data,axis=0)
-face_labels= np.concatenate(labels,axis=0)
+face_labels= np.concatenate(labels,axis=0).reshape((-1,1))
 
+print(face_dataset.shape)
+print(face_labels.shape)
 
-"""
+trainset = np.concatenate((face_dataset,face_labels),axis=1)
+print (trainset.shape)
+
+#Testing
+
+font = cv2.FONT_HERSHEY_SIMPLEX
+
 while True :
 	ret,face=cap.read()
 	gray_frame=cv2.cvtColor(frame,cv2.cvtColor_BGR2GRAY)
 
-	#scaling
+	#scaling,detecting multi faces
 	faces = face_cascade.detectMultiScale(gray_frame,1.3,5)
 
 	if (ret==False):
